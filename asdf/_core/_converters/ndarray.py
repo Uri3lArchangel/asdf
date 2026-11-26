@@ -101,7 +101,8 @@ class NDArrayConverter(Converter[_NdArray, _NdArrayNode]):
         inline_threshold = cfg.array_inline_threshold
 
         if inline_threshold is not None and options.storage_type in ("inline", "internal"):
-            if data.size < inline_threshold:
+            # The inline schema requires a sequence, but a 0-D array produces a scalar.
+            if data.ndim > 0 and data.size < inline_threshold:
                 options.storage_type = "inline"
             else:
                 options.storage_type = "internal"
