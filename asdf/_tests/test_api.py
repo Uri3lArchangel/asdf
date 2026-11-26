@@ -414,6 +414,25 @@ def test_array_inline_threshold(array_inline_threshold, inline_blocks, internal_
             assert len(af._blocks.blocks) == internal_blocks
 
 
+def test_array_inline_threshold_zero_dimensional_array(tmp_path):
+    path = tmp_path / "scalar.asdf"
+    scalar = np.array(1.25, dtype="float32")
+    vector = np.array([1.25], dtype="float32")
+
+    with asdf.config_context() as config:
+        config.array_inline_threshold = 2
+        with asdf.AsdfFile({"scalar": scalar, "vector": vector}) as af:
+            af.write_to(path)
+
+    with asdf.open(path) as af:
+        for name, expected, storage in (("scalar", scalar, "internal"), ("vector", vector, "inline")):
+            actual = af[name]
+            assert af.get_array_storage(actual) == storage
+            assert actual.shape == expected.shape
+            assert actual.dtype == expected.dtype
+            np.testing.assert_array_equal(actual, expected)
+
+
 @pytest.mark.parametrize(
     ("array_inline_threshold", "inline_blocks", "internal_blocks"),
     [
